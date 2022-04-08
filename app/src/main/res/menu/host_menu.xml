@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <group android:id="@+id/sort">
+        <item
+            android:id="@+id/high_priority_item"
+            android:title="High Priority " />
+        <item
+            android:id="@+id/low_priority_item"
+            android:title="Low Priority " />
+    </group>
+    <item
+        android:id="@+id/delete_all_item"
+        android:title="Delete all tasks" />
+    <item
+        android:icon="@drawable/ic_grid_row"
+        android:id="@+id/layout_manager_item"
+        android:title="layout_manager"
+        app:showAsAction="always" />
+</menu>

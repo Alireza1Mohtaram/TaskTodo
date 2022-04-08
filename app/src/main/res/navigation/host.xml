@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/host"
+    app:startDestination="@id/hostFragment">
+
+    <fragment
+        android:id="@+id/addFragment"
+        android:name="com.alireza.todo.ui.fragments.AddFragment"
+        android:label="AddFragment" >
+        <action
+            android:id="@+id/action_addFragment_to_hostFragment"
+            app:destination="@id/hostFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/hostFragment"
+        android:name="com.alireza.todo.ui.fragments.HostFragment"
+        android:label="HostFragment" >
+        <action
+            android:id="@+id/action_hostFragment_to_addFragment"
+            app:destination="@id/addFragment" />
+        <action
+            android:id="@+id/action_hostFragment_to_updateFragment"
+            app:destination="@id/updateFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/updateFragment"
+        android:name="com.alireza.todo.ui.fragments.UpdateFragment"
+        android:label="UpdateFragment" >
+        <action
+            android:id="@+id/action_updateFragment_to_hostFragment"
+            app:destination="@id/hostFragment" />
+    </fragment>
+</navigation>
