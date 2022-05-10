@@ -5,11 +5,13 @@ import android.content.SharedPreferences
 import android.os.Bundle
 import android.util.Log
 import android.view.*
+import android.widget.SearchView
 import android.widget.Toast
 import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -23,8 +25,10 @@ import com.alireza.todo.ui.viewmodels.SharedVM
 import com.alireza.todo.ui.viewmodels.TaskViewModel
 import com.google.android.material.snackbar.Snackbar
 import jp.wasabeef.recyclerview.animators.SlideInUpAnimator
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.launch
 
-class TodoFragment : Fragment() {
+class TodoFragment : Fragment(), SearchView.OnQueryTextListener {
 
     private val viewModel: TaskViewModel by viewModels()
     private val sharedViewModel: SharedVM by activityViewModels()
@@ -70,34 +74,39 @@ class TodoFragment : Fragment() {
             scheduleLayoutAnimation()
         }
         swipeToDelete(binding.todoRecyclerview)
-
     }
 
     private fun swipeToDelete(recyclerView: RecyclerView) {
-        val swipeToDeleteCallback = object : ItemTouchHelper.SimpleCallback(0,ItemTouchHelper.RIGHT) {
-            override fun onMove(
-                recyclerView: RecyclerView,
-                viewHolder: RecyclerView.ViewHolder,
-                target: RecyclerView.ViewHolder
-            ): Boolean {
-                return false
-            }
+        val swipeToDeleteCallback =
+            object : ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.RIGHT) {
+                override fun onMove(
+                    recyclerView: RecyclerView,
+                    viewHolder: RecyclerView.ViewHolder,
+                    target: RecyclerView.ViewHolder
+                ): Boolean {
+                    return false
+                }
 
-            override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
-                val deletedItem = taskAdapter.dataList[viewHolder.adapterPosition]
-                // Delete Item
-                viewModel.deleteTask(deletedItem)
-                taskAdapter.notifyItemRemoved(viewHolder.adapterPosition)
-                // Restore Deleted Item
-                restoreDeletedData(viewHolder, deletedItem , viewHolder.adapterPosition)
-                username?.let { sharedViewModel.getAllTask(it) }
+                override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
+                    val deletedItem = taskAdapter.dataList[viewHolder.adapterPosition]
+                    taskAdapter.notifyItemRemoved(viewHolder.adapterPosition)
+                    // Delete Item
+                    viewModel.deleteTask(deletedItem)
+                    // Restore Deleted Item
+                    restoreDeletedData(viewHolder, deletedItem, viewHolder.adapterPosition)
+                    username?.let { sharedViewModel.getAllTask(it) }
+                    getData()
+                }
             }
-        }
         val itemTouchHelper = ItemTouchHelper(swipeToDeleteCallback)
         itemTouchHelper.attachToRecyclerView(recyclerView)
     }
 
-    private fun restoreDeletedData(view: RecyclerView.ViewHolder, deletedItem: Task , position :Int ) {
+    private fun restoreDeletedData(
+        view: RecyclerView.ViewHolder,
+        deletedItem: Task,
+        position: Int
+    ) {
         val snackBar = Snackbar.make(
             view.itemView, "Deleted '${deletedItem.title}'",
             Snackbar.LENGTH_LONG
@@ -110,8 +119,8 @@ class TodoFragment : Fragment() {
 
     override fun onResume() {
         super.onResume()
-
         Log.d("data", "OnResume")
+        sp.getString("username", "user")?.let { username = it }
         getUser()
 
     }
@@ -126,7 +135,7 @@ class TodoFragment : Fragment() {
                 binding.emptyView.visibility = View.GONE
                 binding.todoRecyclerview.visibility = View.VISIBLE
                 taskAdapter.setData(filterd)
-            }else{
+            } else {
                 binding.emptyView.visibility = View.VISIBLE
                 binding.todoRecyclerview.visibility = View.GONE
             }
@@ -165,7 +174,11 @@ class TodoFragment : Fragment() {
     }
 
     override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
-        val menuF = inflater.inflate(R.menu.host_menu, menu)
+        inflater.inflate(R.menu.host_menu, menu)
+        val search = menu.findItem(R.id.app_bar_search)
+        val searchView = search.actionView as SearchView
+        searchView.isSubmitButtonEnabled = true
+        searchView.setOnQueryTextListener(this)
         super.onCreateOptionsMenu(menu, inflater)
     }
 
@@ -177,43 +190,78 @@ class TodoFragment : Fragment() {
             }
             R.id.high_priority_item -> {
                 username?.let {
-                    viewModel.sortByHighPriority(it).observe(viewLifecycleOwner) {
-                        taskAdapter = TaskList()
-                        val filterd = it.filter {
-                            it.state == State.TODO
+                    lifecycleScope.launch {
+                        viewModel.sortByHighPriority(it).collect {
+                            Log.d("data", it[0].toString())
+                            val filterd = it.filter {
+                                it.state == State.TODO
+                            }
+                            taskAdapter.setData(filterd)
                         }
-                        taskAdapter.setData(filterd)
                     }
                 }
             }
+
             R.id.low_priority_item -> {
                 username?.let {
-                    viewModel.sortByLowPriority(it).observe(viewLifecycleOwner) {
-                        val filterd = it.filter {
-                            it.state == State.TODO
+                    lifecycleScope.launch {
+                        viewModel.sortByLowPriority(it).collect {
+                            taskAdapter = TaskList()
+                            val filterd = it.filter {
+                                it.state == State.TODO
+                            }
+                            taskAdapter.setData(filterd)
                         }
-                        taskAdapter.setData(filterd)
                     }
                 }
             }
-            R.id.layout_manager_item ->{
-                if (layoutManager){
+            R.id.layout_manager_item -> {
+                if (layoutManager) {
                     layoutManager = false
                     item.icon = resources.getDrawable(R.drawable.ic_grid_row)
                     binding.todoRecyclerview.layoutManager = LinearLayoutManager(requireContext())
                     binding.todoRecyclerview.adapter = taskAdapter
-                }
-                else {
+                } else {
                     layoutManager = true
                     item.icon = resources.getDrawable(R.drawable.ic_linear_row)
                     binding.todoRecyclerview.layoutManager =
-                            StaggeredGridLayoutManager(2, StaggeredGridLayoutManager.VERTICAL)
+                        StaggeredGridLayoutManager(2, StaggeredGridLayoutManager.VERTICAL)
                     binding.todoRecyclerview.adapter = taskAdapter
 
                 }
             }
+
         }
         return super.onOptionsItemSelected(item)
+    }
+
+    override fun onQueryTextSubmit(query: String?): Boolean {
+        if (query != null) searchInDataBase(query)
+        return true
+    }
+
+
+    override fun onQueryTextChange(query: String?): Boolean {
+        if (query != null) searchInDataBase(query)
+        return true
+    }
+
+
+    private fun searchInDataBase(query: String?) {
+        viewModel.searchDatabase("%$query%").observe(viewLifecycleOwner) { data ->
+            val filterd = data.filter {
+                it.state == State.TODO
+            }
+            if (filterd.isEmpty().not()) {
+                Log.d("data", filterd[0].toString())
+                binding.emptyView.visibility = View.GONE
+                binding.todoRecyclerview.visibility = View.VISIBLE
+                taskAdapter.setData(filterd)
+            } else {
+                binding.emptyView.visibility = View.VISIBLE
+                binding.todoRecyclerview.visibility = View.GONE
+            }
+        }
     }
 
 

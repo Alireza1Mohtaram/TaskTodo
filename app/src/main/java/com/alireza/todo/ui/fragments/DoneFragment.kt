@@ -40,7 +40,6 @@ class DoneFragment : Fragment(R.layout.done_fragment) {
         setHasOptionsMenu(true)
         return binding.root
     }
-
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
@@ -50,13 +49,9 @@ class DoneFragment : Fragment(R.layout.done_fragment) {
             Log.d("data", it.name)
             Toast.makeText(requireContext(), "$it is done", Toast.LENGTH_SHORT).show()
         }
-
         initRecyclerView()
-
         sp = requireActivity().getSharedPreferences("user", Context.MODE_PRIVATE)
         if (sp.contains("username")) Log.d("data", "hasUsername")
-
-
     }
 
     private fun initRecyclerView() {
@@ -97,7 +92,6 @@ class DoneFragment : Fragment(R.layout.done_fragment) {
 
     override fun onStop() {
         super.onStop()
-
         Log.d("data", "OnStop")
 
     }
@@ -128,7 +122,6 @@ class DoneFragment : Fragment(R.layout.done_fragment) {
             }
         }
     }
-
     private fun swipeToDelete(recyclerView: RecyclerView) {
         val swipeToDeleteCallback =
             object : ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.RIGHT) {

@@ -29,15 +29,13 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
-
         val navHost = supportFragmentManager.findFragmentById(R.id.nav_host) as NavHostFragment
          navController = navHost.navController
-        navController.enableOnBackPressed(true)
         setupActionBarWithNavController(navController)
 
     }
     override fun onBackPressed() {
-            super.onBackPressed()
+            super.onSupportNavigateUp() || navController.navigateUp()
     }
 
     override fun onSupportNavigateUp(): Boolean {

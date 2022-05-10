@@ -1,7 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
-    <group android:id="@+id/sort">
+    <item
+        android:id="@+id/app_bar_search"
+        android:icon="@drawable/ic_search"
+        android:title="Search"
+        app:actionViewClass="android.widget.SearchView"
+        app:showAsAction="always" />
+
+    <group
+        android:id="@+id/sort">
         <item
             android:id="@+id/high_priority_item"
             android:title="High Priority " />
@@ -17,4 +25,5 @@
         android:id="@+id/layout_manager_item"
         android:title="layout_manager"
         app:showAsAction="always" />
+
 </menu>

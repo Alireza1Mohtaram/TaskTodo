@@ -1,7 +1,10 @@
 package com.alireza.todo.ui.adapters
 
 
-import android.opengl.Visibility
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.os.Environment
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -10,18 +13,22 @@ import android.widget.TextView
 import androidx.cardview.widget.CardView
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.content.ContextCompat
-import androidx.core.net.toUri
 import androidx.core.os.bundleOf
 import androidx.navigation.findNavController
 import androidx.recyclerview.widget.DiffUtil
-import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.RecyclerView
 import com.alireza.todo.R
 import com.alireza.todo.data.model.model.Priority
 import com.alireza.todo.data.model.model.Task
 import com.alireza.todo.data.model.utils.ToDoDiffUtils
+import java.io.File
+import java.io.FileInputStream
+import java.io.FileNotFoundException
+import java.io.IOException
+import java.util.*
 
-class TaskList : RecyclerView.Adapter<TaskList.MyViewHolder>() {
+
+class TaskList() : RecyclerView.Adapter<TaskList.MyViewHolder>() {
     var dataList = mutableListOf<Task>()
 
     inner class MyViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
@@ -46,6 +53,7 @@ class TaskList : RecyclerView.Adapter<TaskList.MyViewHolder>() {
 //            }
             description_txt.text = dataList[position].description
             row_background.setOnClickListener {
+                it.findNavController().currentBackStackEntry?.savedStateHandle
                 it.findNavController().navigate(
                     R.id.action_hostFragment_to_updateFragment,
                     bundleOf("task" to dataList[position].id)
@@ -94,7 +102,25 @@ class TaskList : RecyclerView.Adapter<TaskList.MyViewHolder>() {
         val toDoDiffResults = DiffUtil.calculateDiff(toDoDiffUtils)
         this.dataList = toDoData as MutableList<Task>
         toDoDiffResults.dispatchUpdatesTo(this)
-        notifyItemInserted(toDoData.size)
     }
+
+    fun loadImageFromSD(aFileName: String?): Bitmap? {
+        var result: Bitmap? = null
+        if (Environment.getExternalStorageState() == Environment.MEDIA_MOUNTED) {
+            try {
+                val fis =
+                    FileInputStream(File(Environment.getExternalStorageDirectory(), aFileName))
+                result = BitmapFactory.decodeStream(fis)
+                fis.close()
+            } catch (e: FileNotFoundException) {
+                Log.d("load", "loadImageFromSD: " + e.message)
+
+            } catch (e: IOException) {
+                e.printStackTrace()
+            }
+        }
+        return result
+    }
+
 
 }
